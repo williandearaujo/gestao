@@ -1,0 +1,191 @@
+# 📄 PRD COMPLETO — Painel OL Tecnologia (MVP)
+
+📌 Versão atualizada com salário e histórico de aumentos
+
+---
+
+## 🛍️ Estrutura Global do Sistema
+
+* **Sidebar colapsável** com ícones, itens desativados com "Em breve"
+* **Header com**: Notificações 🔔, Busca Global 🔍, Avatar com menu de usuário
+* **Tema**: Claro/Escuro com opção Android/iOS (inspirado), persistente por usuário
+* **Agenda**: visual mensal/semanal, cores por equipe, conflitos inteligentes
+* **Responsivo**: adaptado para mobile e desktop
+
+---
+
+## 🔐 ETAPA 1 — LOGIN & AUTENTICAÇÃO (Clerk)
+
+### Funcionalidades:
+
+* Login com email/senha via Clerk
+* Redirecionamento conforme o tipo de usuário
+* Menu do avatar com: trocar senha, mudar tema, editar perfil
+
+### Testes:
+
+* ✅ Login com dados válidos
+* ❌ Senha incorreta → erro
+* ✅ Redirecionamento conforme perfil
+* ✅ Troca e persistência de tema
+
+---
+
+## 🧑‍💼 ETAPA 2 — MÓDULO DE ANALISTAS
+
+### Funcionalidades:
+
+* Cadastro e listagem com filtros (status, nome, cargo)
+* Campos:
+
+  * Nome, cargo, data de entrada, ativo/inativo
+  * Até 4 períodos de férias
+  * Day off (checkbox)
+  * Observações
+  * Campo oculto: desempenho (Admin/Gerente)
+  * **Novo campo oculto: salário atual**
+  * **Novo campo oculto: data do último ajuste**
+  * **Novo histórico de aumentos**
+
+### Histórico de Aumentos:
+
+* Mostra data, valor anterior, novo valor, observações
+* Visível apenas para Admins e Gerentes
+* Ordenação: mais recente primeiro
+
+### Testes:
+
+* ✅ Cadastro com campos obrigatórios
+* ✅ Edição e manutenção do histórico de salário
+* ✅ Exclusão com confirmação
+* ❌ Analista inativo não aparece em tarefas
+* ✅ Salário e histórico só visível por Admin/Gerente
+
+---
+
+## 🏢 ETAPA 3 — CLIENTES
+
+### Funcionalidades:
+
+* Cadastro: nome, CNPJ, contatos múltiplos, links, produtos, observações
+* Filtros e busca
+* Cards interativos com dados do cliente
+
+### Testes:
+
+* ✅ Cadastro com múltiplos contatos
+* ✅ Busca por nome/CNPJ
+* ✅ Ativação e desativação
+
+---
+
+## 📄 ETAPA 4 — CERTIFICAÇÕES
+
+### Funcionalidades:
+
+* Associadas aos analistas
+* Campos: nome, validade, número, tipo, status (vencida/em dia)
+* Alertas visuais e busca
+
+### Testes:
+
+* ✅ Cadastro, listagem por vencimento
+* ✅ Filtro por tipo e status
+* ✅ Alerta próximo do vencimento
+
+---
+
+## ✅ ETAPA 5 — TAREFAS
+
+### Funcionalidades:
+
+* Atribuir tarefas a 1 ou + analistas
+* Campos: descrição, data de criação, previsão, conclusão real
+* Tarefas concluídas vão para histórico
+
+### Testes:
+
+* ✅ Cadastro e associação com analista
+* ✅ Conclusão move para histórico
+* ✅ Alerta se tarefa for atribuída em Day Off
+
+---
+
+## 🛍️ ETAPA 6 — AGENDA GLOBAL
+
+### Funcionalidades:
+
+* Visual mensal/semanal com filtros
+* Tipos: Férias, Day Off, Visita, Tarefa
+* Cores baseadas na equipe (ex: Equipe 1 = tons de azul)
+* Opção de editar paleta por equipe
+
+### Conflitos:
+
+* 2 analistas da mesma equipe com Day Off na mesma semana → alerta
+* Visita em período de férias → bloqueia
+
+### Testes:
+
+* ✅ Eventos coloridos por equipe
+* ✅ Bloqueio de sobreposição
+* ✅ Troca de paleta funciona
+
+---
+
+## 👥 ETAPA 7 — VISITAS
+
+### Funcionalidades:
+
+* Cadastro: cliente, analista, data, resumo, ações realizadas
+* Visual por cliente ou analista
+* Exportação futura
+
+### Testes:
+
+* ✅ Cadastro válido
+* ✅ Visualização no calendário
+* ✅ Impede cadastro em período de férias
+
+---
+
+## ⚙️ ETAPA 8 — EQUIPAMENTOS (Em breve)
+
+* Associado a cliente
+* Campos: tipo, host, IP, status, última manutenção, observações
+* Histórico de manutenção
+
+---
+
+## 💪 ETAPA 9 — FORNECEDORES (Em breve)
+
+* Cadastro com contatos, contratos, avaliação
+* Relacionamento com equipamentos e clientes
+
+---
+
+## 📊 ETAPA 10 — DASHBOARDS E RELATÓRIOS (Em breve)
+
+* Tarefas por status, visitas por cliente, certificados vencidos
+* Gráficos e KPIs por equipe, período, tipo
+* Exportação (CSV, PDF)
+
+---
+
+## 🔄 ETAPA 11 — INTEGRAÇÕES (Futuro)
+
+* Integrações com: Google Agenda, WhatsApp, Zabbix, Jira
+* Alertas por vencimento e eventos por e-mail/push
+
+---
+
+## 📁 Banco de Dados
+
+* Backend com FastAPI + SQLAlchemy
+* SQLite para dev / PostgreSQL para produção
+* Clerk cuida do login; demais dados ficam no backend
+* Tabela separada para histórico salarial
+
+---
+
+**Próximo passo:** geração do código base com estrutura e tela de analistas.

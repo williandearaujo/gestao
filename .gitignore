@@ -1,0 +1,17 @@
+.DS_Store
+server/public
+vite.config.ts.*
+*.tar.gz
+
+# Ignora ambientes e dependências
+node_modules/
+.venv/
+dist/
+.env
+.env.local
+
+# PyCharm / VSCode
+.idea/
+.vscode/
+__pycache__/
+*.pyc
