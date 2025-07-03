@@ -7,10 +7,12 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+const API_BASE = "http://localhost:8000";
+
 export async function apiRequest(
   method: string,
   url: string,
-  data?: unknown | undefined,
+  data?: unknown
 ): Promise<Response> {
   const sessionId = localStorage.getItem("sessionId");
   const headers: Record<string, string> = {
@@ -18,11 +20,11 @@ export async function apiRequest(
     ...(sessionId ? { Authorization: `Bearer ${sessionId}` } : {})
   };
 
-  const res = await fetch(url, {
+  const res = await fetch(`${API_BASE}${url}`, {
     method,
     headers,
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
+    credentials: "include"
   });
 
   await throwIfResNotOk(res);
@@ -30,28 +32,27 @@ export async function apiRequest(
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
+
 export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
-}) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
-    const sessionId = localStorage.getItem("sessionId");
-    const headers: Record<string, string> = {
-      ...(sessionId ? { Authorization: `Bearer ${sessionId}` } : {})
-    };
-
-    const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
-      headers,
-    });
-
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
-    }
-
-    await throwIfResNotOk(res);
-    return await res.json();
+}) => QueryFunction<T> = ({ on401 }) => async ({ queryKey }) => {
+  const sessionId = localStorage.getItem("sessionId");
+  const headers: Record<string, string> = {
+    ...(sessionId ? { Authorization: `Bearer ${sessionId}` } : {})
   };
+
+  const res = await fetch(`${API_BASE}${queryKey[0]}`, {
+    credentials: "include",
+    headers
+  });
+
+  if (on401 === "returnNull" && res.status === 401) {
+    return null as T;
+  }
+
+  await throwIfResNotOk(res);
+  return (await res.json()) as T;
+};
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -59,11 +60,11 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "returnNull" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: false,
+      staleTime: 5 * 60 * 1000,
+      retry: false
     },
     mutations: {
-      retry: false,
-    },
-  },
+      retry: false
+    }
+  }
 });

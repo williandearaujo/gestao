@@ -19,14 +19,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { X, Trash2, Plus } from "lucide-react";
+import { Trash2, Plus } from "lucide-react";
 import { z } from "zod";
 
 const analystFormSchema = insertAnalystSchema.extend({
-  vacationPeriods: z.array(z.object({
-    startDate: z.string(),
-    endDate: z.string(),
-  })).optional(),
+  vacationPeriods: z
+    .array(
+      z.object({
+        startDate: z.string(),
+        endDate: z.string(),
+      })
+    )
+    .optional(),
+  role: z.string().min(1, "Cargo é obrigatório"),
+  seniority: z.string().min(1, "Senioridade é obrigatória"),
 });
 
 type AnalystFormData = z.infer<typeof analystFormSchema>;
@@ -40,28 +46,33 @@ interface AnalystFormProps {
   isLoading?: boolean;
 }
 
-export function AnalystForm({ 
-  isOpen, 
-  onClose, 
-  onSubmit, 
-  initialData, 
+export function AnalystForm({
+  isOpen,
+  onClose,
+  onSubmit,
+  initialData,
   userRole,
-  isLoading = false 
+  isLoading = false,
 }: AnalystFormProps) {
-  const canEditSalary = userRole === 'admin' || userRole === 'manager';
-  
+  const canEditSalary = userRole === "admin" || userRole === "manager";
+
   const form = useForm<AnalystFormData>({
     resolver: zodResolver(analystFormSchema),
     defaultValues: {
       name: initialData?.name || "",
-      position: initialData?.position || "",
-      startDate: initialData?.startDate ? new Date(initialData.startDate) : new Date(),
+      role: initialData?.position?.split(" ")[0] || "",
+      seniority: initialData?.position?.split(" ")[1] || "",
+      startDate: initialData?.startDate
+        ? initialData.startDate.slice(0, 10)
+        : new Date().toISOString().slice(0, 10),
       isActive: initialData?.isActive ?? true,
       dayOffEnabled: initialData?.dayOffEnabled || false,
       observations: initialData?.observations || "",
       performance: initialData?.performance || "",
       currentSalary: initialData?.currentSalary || "",
-      lastSalaryAdjustment: initialData?.lastSalaryAdjustment ? new Date(initialData.lastSalaryAdjustment) : undefined,
+      lastSalaryAdjustment: initialData?.lastSalaryAdjustment
+        ? initialData.lastSalaryAdjustment.slice(0, 10)
+        : undefined,
       vacationPeriods: [],
     },
   });
@@ -72,7 +83,23 @@ export function AnalystForm({
   });
 
   const handleSubmit = (data: AnalystFormData) => {
-    onSubmit(data);
+  const formattedData = {
+    name: data.name,
+    position: `${data.role} ${data.seniority}`,
+    start_date: data.startDate,  // 🔁 NOME CORRETO
+    is_active: data.isActive,
+    day_off_enabled: data.dayOffEnabled,
+    observations: data.observations,
+    performance: data.performance,
+    current_salary: data.currentSalary ? Number(data.currentSalary) : undefined,
+    last_salary_adjustment: data.lastSalaryAdjustment || undefined,
+    vacationPeriods: data.vacationPeriods?.map((v) => ({
+      start_date: v.startDate,
+      end_date: v.endDate,
+    })) ?? [],
+  };
+
+    onSubmit(formattedData);
   };
 
   const addVacationPeriod = () => {
@@ -89,40 +116,55 @@ export function AnalystForm({
             {initialData ? "Editar Analista" : "Novo Analista"}
           </DialogTitle>
         </DialogHeader>
-        
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-          {/* Basic Information */}
+
+        <form
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="space-y-6"
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nome Completo *</Label>
               <Input
                 id="name"
                 {...form.register("name")}
-                className={form.formState.errors.name ? "border-red-500" : ""}
+                className={
+                  form.formState.errors.name ? "border-red-500" : ""
+                }
               />
-              {form.formState.errors.name && (
-                <p className="text-sm text-red-500">{form.formState.errors.name.message}</p>
-              )}
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="position">Cargo *</Label>
-              <Select 
-                onValueChange={(value) => form.setValue("position", value)}
-                defaultValue={form.getValues("position")}
+              <Label htmlFor="role">Cargo *</Label>
+              <Input
+                id="role"
+                placeholder="Ex: Analista, Coordenador..."
+                {...form.register("role")}
+                className={
+                  form.formState.errors.role ? "border-red-500" : ""
+                }
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="seniority">Senioridade *</Label>
+              <Select
+                onValueChange={(value) =>
+                  form.setValue("seniority", value)
+                }
+                defaultValue={form.getValues("seniority")}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecionar cargo" />
+                  <SelectValue placeholder="Selecionar senioridade" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="junior">Analista Junior</SelectItem>
-                  <SelectItem value="pleno">Analista Pleno</SelectItem>
-                  <SelectItem value="senior">Analista Senior</SelectItem>
+                  <SelectItem value="Júnior">Júnior</SelectItem>
+                  <SelectItem value="Pleno">Pleno</SelectItem>
+                  <SelectItem value="Sênior">Sênior</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="startDate">Data de Entrada *</Label>
@@ -130,14 +172,18 @@ export function AnalystForm({
                 id="startDate"
                 type="date"
                 {...form.register("startDate")}
-                className={form.formState.errors.startDate ? "border-red-500" : ""}
+                className={
+                  form.formState.errors.startDate ? "border-red-500" : ""
+                }
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="isActive">Status</Label>
-              <Select 
-                onValueChange={(value) => form.setValue("isActive", value === "true")}
+              <Select
+                onValueChange={(value) =>
+                  form.setValue("isActive", value === "true")
+                }
                 defaultValue={form.getValues("isActive").toString()}
               >
                 <SelectTrigger>
@@ -151,12 +197,9 @@ export function AnalystForm({
             </div>
           </div>
 
-          {/* Salary Information (Admin/Manager only) */}
           {canEditSalary && (
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-                Informações Salariais
-              </h4>
+              <h4 className="text-sm font-semibold mb-3">Informações Salariais</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="currentSalary">Salário Atual</Label>
@@ -178,10 +221,9 @@ export function AnalystForm({
             </div>
           )}
 
-          {/* Vacation Periods */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+              <h4 className="text-sm font-semibold">
                 Períodos de Férias (máximo 4)
               </h4>
               <Button
@@ -191,13 +233,14 @@ export function AnalystForm({
                 onClick={addVacationPeriod}
                 disabled={fields.length >= 4}
               >
-                <Plus size={16} className="mr-2" />
-                Adicionar
+                <Plus size={16} className="mr-2" /> Adicionar
               </Button>
             </div>
-            
             {fields.map((field, index) => (
-              <div key={field.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <div
+                key={field.id}
+                className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+              >
                 <div className="space-y-2">
                   <Label className="text-xs">Data Início</Label>
                   <Input
@@ -227,17 +270,17 @@ export function AnalystForm({
             ))}
           </div>
 
-          {/* Additional Options */}
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <Checkbox
                 id="dayOffEnabled"
                 checked={form.watch("dayOffEnabled")}
-                onCheckedChange={(checked) => form.setValue("dayOffEnabled", !!checked)}
+                onCheckedChange={(checked) =>
+                  form.setValue("dayOffEnabled", !!checked)
+                }
               />
               <Label htmlFor="dayOffEnabled">Habilitar Day Off</Label>
             </div>
-            
             <div className="space-y-2">
               <Label htmlFor="observations">Observações</Label>
               <Textarea
@@ -246,12 +289,14 @@ export function AnalystForm({
                 {...form.register("observations")}
               />
             </div>
-            
+
             {canEditSalary && (
               <div className="space-y-2">
                 <Label htmlFor="performance">Desempenho</Label>
-                <Select 
-                  onValueChange={(value) => form.setValue("performance", value)}
+                <Select
+                  onValueChange={(value) =>
+                    form.setValue("performance", value)
+                  }
                   defaultValue={form.getValues("performance")}
                 >
                   <SelectTrigger>
@@ -268,7 +313,6 @@ export function AnalystForm({
             )}
           </div>
 
-          {/* Form Actions */}
           <div className="flex space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
             <Button
               type="button"
@@ -279,11 +323,7 @@ export function AnalystForm({
             >
               Cancelar
             </Button>
-            <Button
-              type="submit"
-              className="flex-1"
-              disabled={isLoading}
-            >
+            <Button type="submit" className="flex-1" disabled={isLoading}>
               {isLoading ? "Salvando..." : "Salvar Analista"}
             </Button>
           </div>

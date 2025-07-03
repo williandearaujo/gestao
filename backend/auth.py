@@ -1,15 +1,20 @@
-# [2] auth.py – Autenticação Clerk JWT
+# [2] routes/auth.py – Autenticação Clerk JWT
 
-from fastapi import Request, HTTPException, status
+from fastapi import Request, HTTPException, status, APIRouter
 from jose import jwt
 from jose.exceptions import JWTError
 import httpx
+from fastapi import Depends
+
+
+router = APIRouter()
 
 # URL da chave pública JWKS do seu projeto Clerk
 JWKS_URL = "https://clerk.enhanced-doe-80.clerk.accounts.dev/.well-known/jwks.json"
 ALGORITHMS = ["RS256"]
-AUDIENCE = "https://clerk.enhanced-doe-80.clerk.accounts.dev"  # igual seu domínio clerk
+AUDIENCE = "https://clerk.enhanced-doe-80.clerk.accounts.dev"  # igual ao domínio do seu projeto Clerk
 
+# Middleware de autenticação
 async def get_current_user(request: Request):
     auth_header = request.headers.get("Authorization")
 
@@ -20,7 +25,8 @@ async def get_current_user(request: Request):
 
     try:
         async with httpx.AsyncClient() as client:
-            jwks = (await client.get(JWKS_URL)).json()
+            response = await client.get(JWKS_URL)
+            jwks = response.json()
 
         headers = jwt.get_unverified_header(token)
         key = next((k for k in jwks["keys"] if k["kid"] == headers["kid"]), None)
@@ -44,7 +50,15 @@ async def get_current_user(request: Request):
             options={"verify_exp": True}
         )
 
-        return payload  # aqui vem o user_id, email, etc.
+        return payload  # contém user_id, email etc.
 
     except JWTError as e:
         raise HTTPException(status_code=401, detail=f"Token inválido: {str(e)}")
+
+# Teste simples de rota protegida
+@router.get("/protegido")
+async def rota_protegida(user=Depends(get_current_user)):
+    return {
+        "mensagem": "Você acessou uma rota protegida com sucesso.",
+        "usuario": user
+    }
