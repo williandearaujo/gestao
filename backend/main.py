@@ -24,7 +24,7 @@ app = FastAPI(
 # 🌐 CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Em produção, substitua pelos domínios permitidos
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -33,13 +33,12 @@ app.add_middleware(
 # ✅ Registro de rotas
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(protected.router, prefix="/api", tags=["Protegido"])
-app.include_router(analyst.router, prefix="/api/analysts", tags=["Analistas"])
+app.include_router(analyst.router, prefix="/api/analysts", tags=["Analysts"])  # Corrigido para Swagger exibir
 
 # ✅ Rota de teste
-@app.get("/")
+@app.get("/", include_in_schema=False)
 def read_root():
     return {"mensagem": "API FastAPI funcionando! 🚀", "status": "online"}
-    return {"Mensagem": "Acesse o http://localhost:8000/docs#/"}
 
 # 📝 Log de requisições
 logging.basicConfig(level=logging.INFO)
@@ -57,6 +56,9 @@ async def show_routes():
     for route in app.routes:
         if isinstance(route, APIRoute):
             print(f"🔹 {route.path} [{','.join(route.methods)}]")
+
+            print("✅ Import do analyst.py feito no main.py")
+
 
 # 🏃 Execução local
 if __name__ == "__main__":
